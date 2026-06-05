@@ -136,7 +136,7 @@ export default function EmployerDashboard() {
                           <div style={{ fontSize: '11px', fontWeight: '800', color: '#2563eb', marginTop: '5px' }}>المهارات: {app.applicant.skills || 'غير محددة'}</div>
                         </div>
                         <div style={{ display: 'flex', gap: '10px' }}>
-                          <a href={`http://localhost:5000${app.applicant.cvPath}`} target='_blank' style={{ padding: '12px', backgroundColor: 'white', borderRadius: '14px', color: '#0f172a', border: '2px solid #E2E8F0', display: 'flex', alignItems: 'center' }} title='تحميل السيرة الذاتية'><Download size={20}/></a>
+                          <a href={`https://pro-hire-backend.onrender.com${app.applicant.cvPath}`} target='_blank' style={{ padding: '12px', backgroundColor: 'white', borderRadius: '14px', color: '#0f172a', border: '2px solid #E2E8F0', display: 'flex', alignItems: 'center' }} title='تحميل السيرة الذاتية'><Download size={20}/></a>
                           {app.status === 'pending' ? (
                             <button onClick={() => handleStatus(app._id, 'accepted')} style={{ padding: '10px 25px', backgroundColor: '#22c55e', color: 'white', border: 'none', borderRadius: '14px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 4px 12px rgba(34, 197, 94, 0.2)' }}>قبول المتقدم</button>
                           ) : (
