@@ -1,147 +1,135 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Briefcase, Bell, LogOut, Home, LayoutDashboard, Info } from 'lucide-react';
-import API from '../api/axios';
+import { Home, LayoutDashboard, LogOut, Menu, X, User } from 'lucide-react';
 
-export default function Navbar() {
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('المستخدم');
   const navigate = useNavigate();
   const location = useLocation();
-  const token = localStorage.getItem('token');
-  const role = localStorage.getItem('role');
-  const [hasNotification, setHasNotification] = useState(false);
 
-  // وظيفة فحص التنبيهات الذكية بناءً على الشروط الجديدة
-  const checkAlerts = async () => {
-    if (!token) return;
-    try {
-      if (role === 'seeker') {
-        const res = await API.get('/jobs');
-        const totalJobsInDB = res.data.length;
-
-        // جلب آخر عدد وظائف تم الاطلاع عليها من الذاكرة المحلية
-        const lastViewedJobsCount = parseInt(localStorage.getItem('lastViewedJobsCount') || '0');
-
-        // إذا كان المتقدم داخل لوحة التحكم (صفحة التصفح)، نقوم بتحديث الذاكرة فوراً وإطفاء الجرس
-        if (location.pathname === '/seeker-dashboard') {
-          localStorage.setItem('lastViewedJobsCount', totalJobsInDB.toString());
-          setHasNotification(false);
-        } else {
-          // يضيء الجرس فقط إذا كان عدد الوظائف في قاعدة البيانات أكبر من التي اطلع عليها مسبقاً
-          setHasNotification(totalJobsInDB > lastViewedJobsCount);
-        }
-      } else if (role === 'employer') {
-        const res = await API.get('/applications/employer-data');
-        // حساب إجمالي المتقدمين لجميع وظائف هذه الشركة حالياً
-        const totalApplicantsInDB = res.data.reduce((acc, curr) => acc + curr.applicants.length, 0);
-
-        // جلب آخر عدد متقدمين تم الاطلاع عليهم من الذاكرة المحلية
-        const lastViewedApplicantsCount = parseInt(localStorage.getItem('lastViewedApplicantsCount') || '0');
-
-        // إذا كان صاحب العمل داخل لوحة التحكم الخاصة به، نحدث الذاكرة فوراً ونطفئ الجرس
-        if (location.pathname === '/employer-dashboard') {
-          localStorage.setItem('lastViewedApplicantsCount', totalApplicantsInDB.toString());
-          setHasNotification(false);
-        } else {
-          // يضيء الجرس فقط إذا زاد عدد المتقدمين عن آخر مرة شاهد فيها اللوحة
-          setHasNotification(totalApplicantsInDB > lastViewedApplicantsCount);
+  useEffect(() => {
+    // التحقق المباشر من وجود التوكن لتأكيد تسجيل الدخول
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    
+    if (token) {
+      setIsLoggedIn(true);
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (parsed && parsed.name) setUserName(parsed.name);
+        } catch (e) {
+          setUserName('لوحتي');
         }
       }
-    } catch (err) { 
-      console.log("Header Alert Sync Error"); 
+    } else {
+      setIsLoggedIn(false);
     }
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setIsLoggedIn(false);
+    navigate('/login');
+    setIsOpen(false);
+  };
+
+  // دالة ذكية مرنة لتوجيه المستخدم للوحته بناء على الفرع المخزن
+  const getDashboardPath = () => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        if (parsed.role === 'admin') return '/admin-pro-panel';
+        if (parsed.role === 'employer') return '/employer-dashboard';
+      } catch(e) {}
+    }
+    return '/seeker-dashboard'; // التوجيه الافتراضي الآمن
   };
 
   useEffect(() => {
-    checkAlerts();
-    const interval = setInterval(checkAlerts, 10000); // فحص صامت وتحديث ذكي كل 10 ثوانٍ
-    return () => clearInterval(interval);
-  }, [token, location.pathname]);
-
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
-
-  if (!token || location.pathname === '/login' || location.pathname === '/register') return null;
+    const styleId = 'navbar-responsive-styles';
+    if (!document.getElementById(styleId)) {
+      const styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      styleElement.innerHTML = `
+        @media (max-width: 768px) {
+          .desktop-menu { display: none !important; }
+          .menu-toggle-btn { display: block !important; }
+          .mobile-menu-box { display: ${isOpen ? 'flex' : 'none'} !important; }
+        }
+        @media (min-width: 769px) {
+          .desktop-menu { display: flex !important; }
+          .menu-toggle-btn { display: none !important; }
+          .mobile-menu-box { display: none !important; }
+        }
+      `;
+      document.head.appendChild(styleElement);
+    } else {
+      document.getElementById(styleId).innerHTML = `
+        @media (max-width: 768px) {
+          .desktop-menu { display: none !important; }
+          .menu-toggle-btn { display: block !important; }
+          .mobile-menu-box { display: ${isOpen ? 'flex' : 'none'} !important; }
+        }
+        @media (min-width: 769px) {
+          .desktop-menu { display: flex !important; }
+          .menu-toggle-btn { display: none !important; }
+          .mobile-menu-box { display: none !important; }
+        }
+      `;
+    }
+  }, [isOpen]);
 
   const styles = {
-    nav: { 
-      background: 'rgba(15, 23, 42, 0.85)', 
-      backdropFilter: 'blur(16px)', 
-      borderBottom: '1px solid rgba(255, 255, 255, 0.08)', 
-      padding: '15px 50px', 
-      position: 'sticky', 
-      top: 0, 
-      zIndex: 1000, 
-      display: 'flex', 
-      justifyContent: 'space-between', 
-      alignItems: 'center', 
-      fontFamily: "'Segoe UI', Roboto, sans-serif",
-      boxShadow: '0 4px 30px rgba(0, 0, 0, 0.2)'
-    },
-    rightSection: { display: 'flex', alignItems: 'center', gap: '20px' },
-    menu: { display: 'flex', gap: '20px', alignItems: 'center' },
-    navLink: (active) => ({ 
-      color: active ? '#3b82f6' : '#94a3b8', 
-      fontWeight: '700', 
-      textDecoration: 'none', 
-      fontSize: '15px', 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '8px', 
-      transition: 'all 0.3s ease',
-      padding: '8px 16px',
-      borderRadius: '12px',
-      backgroundColor: active ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
-    }),
-    leftLogo: { display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'white', transition: '0.3s' },
-    logoText: { fontWeight: '900', fontSize: '24px', letterSpacing: '0.5px', margin: 0, background: 'linear-gradient(to left, #3b82f6, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
-    bellBtn: { background: 'none', border: 'none', cursor: 'pointer', position: 'relative', color: hasNotification ? '#ef4444' : '#94a3b8', transition: '0.3s', display: 'flex' },
-    logoutBtn: { padding: '10px 20px', backgroundColor: 'transparent', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '14px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', transition: 'all 0.3s ease' }
+    nav: { backgroundColor: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '15px 25px', position: 'sticky', top: 0, zIndex: 1000, fontFamily: "'Segoe UI', sans-serif" },
+    container: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1200px', margin: '0 auto', flexWrap: 'wrap' },
+    logo: { fontSize: '22px', fontWeight: 'bold', color: '#0F172A', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' },
+    menuBtn: { display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: '#0F172A' },
+    navLinks: { display: 'flex', gap: '20px', alignItems: 'center' },
+    link: (active) => ({ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none', color: active ? '#22D3EE' : '#475569', fontWeight: active ? 'bold' : '500', fontSize: '15px', transition: 'all 0.3s' }),
+    logoutBtn: { display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', color: '#EF4444', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' },
+    mobileMenu: { display: isOpen ? 'flex' : 'none', flexDirection: 'column', width: '100%', gap: '15px', padding: '15px 0 5px 0', borderTop: '1px solid #F1F5F9', marginTop: '10px' }
   };
 
   return (
-    <nav style={styles.nav} dir="rtl">
-      {/* 1. أقصى اليمين: التنبيهات والخروج بتصميم متناسق وفخم */}
-      <div style={styles.rightSection}>
-        <button onClick={handleLogout} style={styles.logoutBtn} 
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#ef4444'; e.currentTarget.style.color = 'white'; }} 
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#f87171'; }}
-          title="تسجيل الخروج"
-        >
-          <LogOut size={16} />
-          تسجيل الخروج
+    <nav style={styles.nav}>
+      <div style={styles.container}>
+        <Link to="/home" style={styles.logo}>💼 ProHire <span style={{fontSize:'12px', color:'#22D3EE', backgroundColor:'#E0F2FE', padding:'2px 8px', borderRadius:'12px'}}>Platform</span></Link>
+        
+        <button className="menu-toggle-btn" style={styles.menuBtn} onClick={() => setIsOpen(!isOpen)}>
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
-
-        <button style={styles.bellBtn} title="التنبيهات">
-          <Bell size={22} fill={hasNotification ? "#ef4444" : "none"} style={{ filter: hasNotification ? 'drop-shadow(0 0 8px #ef4444)' : 'none' }} />
-          {hasNotification && (
-            <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '10px', height: '10px', backgroundColor: '#ef4444', borderRadius: '50%', border: '2px solid #0f172a' }}></span>
+        {/* 💻 هيدر الكمبيوتر واللابتوب الفخم */}
+        <div className="desktop-menu" style={styles.navLinks}>
+          <Link to="/home" style={styles.link(location.pathname === '/home')}><Home size={18} /> الرئيسية</Link>
+          {isLoggedIn && (
+            <>
+              <Link to={getDashboardPath()} style={styles.link(location.pathname.includes('dashboard') || location.pathname.includes('panel'))}><LayoutDashboard size={18} /> لوحة التحكم</Link>
+              <span style={{ fontSize: '14px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px' }}><User size={16} /> {userName}</span>
+              <button onClick={handleLogout} style={styles.logoutBtn}><LogOut size={18} /> خروج</button>
+            </>
           )}
-        </button>
+        </div>
       </div>
 
-      {/* 2. المنتصف: أزرار التنقل */}
-      <div style={styles.menu}>
-        <Link to="/home" style={styles.navLink(location.pathname === '/home')}>
-          <Home size={18}/> الرئيسية
-        </Link>
-        <Link to={role === 'employer' ? '/employer-dashboard' : '/seeker-dashboard'} 
-              style={styles.navLink(location.pathname.includes('dashboard'))}>
-          <LayoutDashboard size={18}/> لوحة التحكم
-        </Link>
-        <Link to="/about" style={styles.navLink(location.pathname === '/about')}>
-          <Info size={18}/> عن المنصة
-        </Link>
+      {/* 📱 هيدر الهاتف الذكي المتجاوب المطور (يفتح بالضغط) */}
+      <div className="mobile-menu-box" style={styles.mobileMenu}>
+        <Link to="/home" onClick={() => setIsOpen(false)} style={styles.link(location.pathname === '/home')}><Home size={18} /> الرئيسية</Link>
+        {isLoggedIn && (
+          <>
+            <Link to={getDashboardPath()} onClick={() => setIsOpen(false)} style={styles.link(location.pathname.includes('dashboard') || location.pathname.includes('panel'))}><LayoutDashboard size={18} /> لوحة التحكم</Link>
+            <div style={{ padding: '5px 0', fontSize: '14px', color: '#64748B', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '4px' }}><User size={16} /> {userName}</div>
+            <button onClick={handleLogout} style={{...styles.logoutBtn, padding: '5px 0', justifyContent: 'flex-start'}}><LogOut size={18} /> تسجيل الخروج</button>
+          </>
+        )}
       </div>
-
-      {/* 3. أقصى الشمال (اليسار): الشعار والأيقونة المضيئة */}
-      <Link to={role === 'employer' ? '/employer-dashboard' : '/seeker-dashboard'} style={styles.leftLogo} onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'} onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}>
-        <span style={styles.logoText}>ProHire</span>
-        <Briefcase size={26} color="#3b82f6" style={{ filter: 'drop-shadow(0 0 8px #3b82f6)' }} />
-      </Link>
     </nav>
   );
-}
+};
+
+export default Navbar;
