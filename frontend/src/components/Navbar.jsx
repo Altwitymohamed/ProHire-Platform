@@ -125,7 +125,7 @@ export default function Navbar() {
 
       {/* 2. المنتصف: أزرار التنقل */}
       <div style={styles.menu}>
-        <Link to="/" style={styles.navLink(location.pathname === '/')}>
+        <Link to="/home" style={styles.navLink(location.pathname === '/home')}>
           <Home size={18}/> الرئيسية
         </Link>
         <Link to={role === 'employer' ? '/employer-dashboard' : '/seeker-dashboard'} 

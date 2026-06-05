@@ -42,3 +42,22 @@ exports.getJobs = async (req, res) => {
     res.status(500).send('خطأ في السيرفر');
   }
 };
+
+// 🚀 حقن دالة جلب الإحصائيات الحية لصفحة home بالتوافق مع نظام التصدير الخاص بك
+exports.getPlatformStats = async (req, res) => {
+  try {
+    const Application = require('../models/Application');
+
+    const jobsCount = await Job.countDocuments({});
+    const companiesCount = await User.countDocuments({ role: 'employer' });
+    const applicantsCount = await Application.countDocuments({});
+
+    res.status(200).json({
+      jobs: jobsCount,
+      companies: companiesCount,
+      applicants: applicantsCount
+    });
+  } catch (error) {
+    res.status(500).json({ msg: 'خطأ في السيرفر', error: error.message });
+  }
+};

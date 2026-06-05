@@ -4,10 +4,10 @@ import Login from './pages/Login';
 import SeekerDashboard from './pages/SeekerDashboard';
 import EmployerDashboard from './pages/EmployerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import Home from './pages/Home'; // 🚀 استدعاء صفحة الرئيسية المستقلة الجديدة
 
-// استدعاء المكونات المشتركة الفخمة
 import Navbar from './components/Navbar';
-import Footer from './components/Footer'; // استدعاء الفوتر الذي أنشأناه للتو
+import Footer from './components/Footer'; // 👑 إعادة استدعاء الفوتر الفخم الخاص بك
 
 function App() {
   return (
@@ -20,10 +20,8 @@ function App() {
         fontFamily: "'Segoe UI', Roboto, sans-serif" 
       }}>
         
-        {/* حقن الهيدر الذكي المطور في الأعلى */}
         <Navbar />
         
-        {/* صندوق المنتصف المرن لاستقبال الصفحات */}
         <div style={{ flex: 1 }}>
           <Routes>
             <Route path='/register' element={<Register />} />
@@ -31,11 +29,15 @@ function App() {
             <Route path='/seeker-dashboard' element={<SeekerDashboard />} />
             <Route path='/employer-dashboard' element={<EmployerDashboard />} />
             <Route path='/admin-pro-panel' element={<AdminDashboard />} />
+            
+            {/* 🚀 تسجيل المسار المستقل والمطلوب للرفع */}
+            <Route path='/home' element={<Home />} />
+            
             <Route path='/' element={<Navigate to='/login' />} />
           </Routes>
         </div>
 
-        {/* حقن الفوتر الفخم للمهندس محمد التويتي في الأسفل */}
+        {/* 👑 حقن الفوتر الفخم للمهندس محمد التويتي في الأسفل كما كان تماماً */}
         <Footer />
         
       </div>

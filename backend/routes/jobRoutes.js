@@ -10,3 +10,6 @@ router.get('/', getJobs);
 router.post('/', auth, createJob);
 
 module.exports = router;
+
+// تفعيل مسار الإحصائيات الحية لصفحة home بنظافة تامة
+router.get('/stats', require('../controllers/jobController').getPlatformStats);
